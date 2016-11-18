@@ -9,9 +9,52 @@ import utilities
 import openLoopControl as olc
 
 print ('Welcome to ev3')
+
+def checkEndLine(error, lastError):
+	global constantCount
+	if error == lastError: 
+		constantCount = constantCount + 1
+	else:
+		constantCount = 0
+		return 0;
+	if constantCount == 50:
+		return 1;
+
+def followLine():
+	Kp = float(2) # Proportional gain. Start value 1
+	Kd =0.5           # Derivative gain. Start value 0
+	Ki = float(0.5) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 100!
+	offset = 45                           # Initialize the variables
+	integral = 0.0                          # the place where we will store our integral
+	lastError = 0.0                         # the place where we will store the last error value
+	derivative = 0.0                        # the place where we will store the derivative
+	constantCount = 0
+	while not btn.any():
+		LightValue = colorSensor.value()    # what is the current light reading?
+		error = LightValue - offset        # calculate the error by subtracting the offset
+		if checkEndLine(error, lastError):
+			break
+		integral = 0.5*integral + error        # calculate the integral
+		derivative = error - lastError     # calculate the derivative
+		Turn = Kp*error + Ki*integral + Kd*derivative  # the "P term" the "I term" and the "D term"
+		#Turn = Turn/100                      # REMEMBER to undo the affect of the factor of 100 in Kp, Ki and Kd!
+		# powerA = Tp + Turn                 # the power level for the A motor
+		# powerC = Tp - Turn                 # the power level for the C motor
+		(l,r)=steering2(Turn,Tp)
+		motR.duty_cycle_sp=r
+		motL.duty_cycle_sp=l
+		lastError = error                  #save the current error so it can be the lastError next time around
+		#time.sleep(0.1)
+	return 0
+
 def runForward():
     motR.run_direct()
     motL.run_direct()
+
+def turnRight():
+	motR.duty_cycle_sp = 100
+	motL.duty_clycle_sp = 100
+
 def steering2(course, power):
 	"""
 	Computes how fast each motor in a pair should turn to achieve the
@@ -52,39 +95,21 @@ Tp = 60
 motR = ev3.LargeMotor('outA')
 motL = ev3.LargeMotor('outD')
 colorSensor = ev3.ColorSensor()
+gyroSensor = ev3.GyroSensor()
 btn =ev3.Button()
 colorSensor.mode = 'COL-REFLECT'
 colorSensor.connected
 runForward()
-Kp = float(2) # Proportional gain. Start value 1
-Kd =0.5           # Derivative gain. Start value 0
-Ki = float(0.5) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 100!
-offset = 45                           # Initialize the variables
-integral = 0.0                          # the place where we will store our integral
-lastError = 0.0                         # the place where we will store the last error value
-derivative = 0.0                        # the place where we will store the derivative
-constantCount = 0
-while not btn.any():
-	LightValue = colorSensor.value()    # what is the current light reading?
-	error = LightValue - offset        # calculate the error by subtracting the offset
-	if error == lastError:
-		constantCount = constantCount + 1
-	else:
-		constantCount = 0
-	if constantCount == 50:
-		#ev3.Sound.speak('I\'m done b').wait()
-		motR.stop()
-		motL.stop()
-		break
-	integral = 0.5*integral + error        # calculate the integral
-	derivative = error - lastError     # calculate the derivative
-	Turn = Kp*error + Ki*integral + Kd*derivative  # the "P term" the "I term" and the "D term"
-	#Turn = Turn/100                      # REMEMBER to undo the affect of the factor of 100 in Kp, Ki and Kd!
-	# powerA = Tp + Turn                 # the power level for the A motor
-	# powerC = Tp - Turn                 # the power level for the C motor
-	(l,r)=steering2(Turn,Tp)
-	motR.duty_cycle_sp=r
-	motL.duty_cycle_sp=l
-	lastError = error                  #save the current error so it can be the lastError next time around
-	#time.sleep(0.1)
+followLine()
 ev3.Sound.speak('I\'m done baby').wait()
+time.sleep(0.1)
+# while not btn.any():
+# 	gyroSensor.mode ='GYRO-ANG'
+# 	print gyroSensor.value()
+# 	#ev3.Sound.speak('turning around').wait()
+# 	motL.duty_cycle_sp=50
+# 	motR.duty_cycle_sp=-50
+
+# motL.run_forever()
+# motR.run_forever()
+# turnRight()

@@ -9,7 +9,8 @@ def operateWheelsBasic():
     print "spin the wheels"
 
     motor =ev3.LargeMotor('outA')
-    motor.connected
+    motor.c
+
 
     # run_time takes milliseconds
     motor.run_timed(duty_cycle_sp=25, time_sp=500)
@@ -74,7 +75,7 @@ def recordUltraSonic():
     sonar = ev3.UltrasonicSensor(ev3.INPUT_1)
     sonar.connected
     sonar.mode = 'US-DIST-CM' # will return value in mm
-
+    print("pls print this to know we connected the right thingie")
     readings = ""
     readings_file = open('results.txt', 'w')
 

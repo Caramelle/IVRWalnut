@@ -1,10 +1,14 @@
+#! /usr/bin/env python
+# Core imports
 import time
 import ev3dev.ev3 as ev3
 
 # Local Imports
 import tutorial as tutorial
 import utilities
+import openLoopControl as olc
 
+print ('Welcome to ev3')
 def runForward():
     motR.run_direct()
     motL.run_direct()
@@ -43,6 +47,7 @@ def steering2(course, power):
 			power_right = power
 			power_left = power + ((power * course) / 100)
 	return (int(power_left), int(power_right))
+
 Tp = 60
 motR = ev3.LargeMotor('outA')
 motL = ev3.LargeMotor('outD')
@@ -58,17 +63,28 @@ offset = 45                           # Initialize the variables
 integral = 0.0                          # the place where we will store our integral
 lastError = 0.0                         # the place where we will store the last error value
 derivative = 0.0                        # the place where we will store the derivative
+constantCount = 0
 while not btn.any():
-   LightValue = colorSensor.value()    # what is the current light reading?
-   error = LightValue - offset        # calculate the error by subtracting the offset
-   integral = 0.5*integral + error        # calculate the integral
-   derivative = error - lastError     # calculate the derivative
-   Turn = Kp*error + Ki*integral + Kd*derivative  # the "P term" the "I term" and the "D term"
-   #Turn = Turn/100                      # REMEMBER to undo the affect of the factor of 100 in Kp, Ki and Kd!
-  # powerA = Tp + Turn                 # the power level for the A motor
-  # powerC = Tp - Turn                 # the power level for the C motor
-   (l,r)=steering2(Turn,Tp)
-   motR.duty_cycle_sp=r
-   motL.duty_cycle_sp=l
-   lastError = error                  #save the current error so it can be the lastError next time around
-   #time.sleep(0.1)
+	LightValue = colorSensor.value()    # what is the current light reading?
+	error = LightValue - offset        # calculate the error by subtracting the offset
+	if error == lastError:
+		constantCount = constantCount + 1
+	else:
+		constantCount = 0
+	if constantCount == 50:
+		#ev3.Sound.speak('I\'m done b').wait()
+		motR.stop()
+		motL.stop()
+		break
+	integral = 0.5*integral + error        # calculate the integral
+	derivative = error - lastError     # calculate the derivative
+	Turn = Kp*error + Ki*integral + Kd*derivative  # the "P term" the "I term" and the "D term"
+	#Turn = Turn/100                      # REMEMBER to undo the affect of the factor of 100 in Kp, Ki and Kd!
+	# powerA = Tp + Turn                 # the power level for the A motor
+	# powerC = Tp - Turn                 # the power level for the C motor
+	(l,r)=steering2(Turn,Tp)
+	motR.duty_cycle_sp=r
+	motL.duty_cycle_sp=l
+	lastError = error                  #save the current error so it can be the lastError next time around
+	#time.sleep(0.1)
+ev3.Sound.speak('I\'m done baby').wait()

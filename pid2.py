@@ -10,6 +10,23 @@ import openLoopControl as olc
 
 print ('Welcome to ev3')
 
+def findNextLine():
+	while colorSensor.value() > 20:
+		motR.run_direct(duty_cycle_sp = 18)
+		motL.run_direct(duty_cycle_sp = 18)
+	#motR.stop()
+	#mntL.stop()
+	ev3.Sound.speak('Found line').wait()
+
+
+def turnLeft():
+	motL.run_timed(duty_cycle_sp=30, time_sp=2300)
+	time.sleep(2)
+
+def turnRight():
+	motR.run_timed(duty_cycle_sp=30, time_sp=2300)
+	time.sleep(2)
+
 def checkEndLine(error, lastError):
 	global constantCount
 	if error == lastError: 
@@ -17,7 +34,7 @@ def checkEndLine(error, lastError):
 	else:
 		constantCount = 0
 		return 0;
-	if constantCount == 50:
+	if constantCount == 25: #increase or decrease value according to line width
 		return 1;
 
 def followLine():
@@ -33,6 +50,8 @@ def followLine():
 		LightValue = colorSensor.value()    # what is the current light reading?
 		error = LightValue - offset        # calculate the error by subtracting the offset
 		if checkEndLine(error, lastError):
+			motL.stop()
+			motR.stop()
 			break
 		integral = 0.5*integral + error        # calculate the integral
 		derivative = error - lastError     # calculate the derivative
@@ -45,15 +64,14 @@ def followLine():
 		motL.duty_cycle_sp=l
 		lastError = error                  #save the current error so it can be the lastError next time around
 		#time.sleep(0.1)
-	return 0
+	ev3.Sound.speak('End of loop').wait()
+	time.sleep(0.1)
+	#return 0
 
 def runForward():
     motR.run_direct()
     motL.run_direct()
 
-def turnRight():
-	motR.duty_cycle_sp = 100
-	motL.duty_clycle_sp = 100
 
 def steering2(course, power):
 	"""
@@ -101,7 +119,15 @@ colorSensor.mode = 'COL-REFLECT'
 colorSensor.connected
 runForward()
 followLine()
-ev3.Sound.speak('I\'m done baby').wait()
+motR.stop()
+turnLeft()
+ev3.Sound.speak('Looking for love').wait()
+findNextLine()
+motL.stop()
+turnRight()
+ev3.Sound.speak('Found love').wait()
+followLine()
+ev3.Sound.speak('Followed love').wait()
 time.sleep(0.1)
 # while not btn.any():
 # 	gyroSensor.mode ='GYRO-ANG'

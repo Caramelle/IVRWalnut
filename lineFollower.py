@@ -12,6 +12,8 @@ import openLoopControl as olc
 
 def calibrateBlack (sensor):
 	#calibrating for black
+	global blackMin
+	global blackMax
 	print ('Place me on black')
 	time.sleep(2)
 	print ('Reading black')
@@ -30,6 +32,8 @@ def calibrateBlack (sensor):
 
 def calibrateWhite (sensor):
 	#calibrating for white
+	global whiteMin
+	global whiteMax
 	print ('Place me on white')
 	time.sleep(5)
 	print('Reading white')

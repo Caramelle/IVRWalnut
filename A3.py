@@ -8,7 +8,13 @@ import tutorial as tutorial
 import utilities
 import openLoopControl as olc
 
-print ('Welcome to ev3')
+
+
+def checkWhite(sensor):
+	if sensor.value() >= whiteMin and sensor.value() <= whiteMax:
+		return 1 
+	return 0
+
 def runForward():
     motR.run_direct()
     motL.run_direct()
@@ -48,16 +54,24 @@ def steering2(course, power):
 			power_left = power + ((power * course) / 100)
 	return (int(power_left), int(power_right))
 
-Tp = 80
+Tp = 60
 motR = ev3.LargeMotor('outA')
 motL = ev3.LargeMotor('outD')
 colorSensor = ev3.ColorSensor()
 btn =ev3.Button()
 colorSensor.mode = 'COL-REFLECT'
 colorSensor.connected
+
+calibration = open('calibration.txt', 'r')
+#global values for calibration
+blackMin = calibration.read();
+blackMax = calibration.read();
+whiteMin = calibration.read();
+whiteMax = calibration.read();
+
 runForward()
-Kp = float(2) # Proportional gain. Start value 1
-Kd = 0           # Derivative gain. Start value 0
+Kp = float(2.5) # Proportional gain. Start value 1
+Kd =0.8           # Derivative gain. Start value 0
 Ki = float(0.5) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 100!
 offset = 45                           # Initialize the variables
 integral = 0.0                          # the place where we will store our integral
@@ -67,7 +81,7 @@ constantCount = 0
 while not btn.any():
 	LightValue = colorSensor.value()    # what is the current light reading?
 	error = LightValue - offset        # calculate the error by subtracting the offset
-	if error == lastError:
+	if checkWhite(colorSensor):
 		constantCount = constantCount + 1
 	else:
 		constantCount = 0
@@ -76,7 +90,7 @@ while not btn.any():
 		motR.stop()
 		motL.stop()
 		break
-	integral = 0.05*integral + error        # calculate the integral
+	integral = 0.5*integral + error        # calculate the integral
 	derivative = error - lastError     # calculate the derivative
 	Turn = Kp*error + Ki*integral + Kd*derivative  # the "P term" the "I term" and the "D term"
 	#Turn = Turn/100                      # REMEMBER to undo the affect of the factor of 100 in Kp, Ki and Kd!

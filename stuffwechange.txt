@@ -1,0 +1,5 @@
+integral
+	used for conyrolling the oscilation
+	when changed to 0, robot goes smooothly
+	however, if really tight loop, it won't work
+	

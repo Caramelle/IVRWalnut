@@ -37,9 +37,10 @@ def calibrateWhite (sensor):
 	print('Reading white')
 	endTime = time.time() + 5 ;
 	while time.time() <= endTime:
-		motR.run_direct (duty_cycle_sp=10)
-	 	motL.run_direct(duty_cycle_sp=10)
+		motR.run_direct (duty_cycle_sp=30)
+	 	motL.run_direct(duty_cycle_sp=30)
 		current = sensor.value()
+		print current
 		if current <= whiteMin:
 			whiteMin = current
 		if current >= whiteMax:
@@ -64,11 +65,11 @@ whiteMax = 0;
 calibrateWhite(colorSensor)
 calibrateBlack(colorSensor)
 
-readings = ""
-readings_file = open('calibration.txt', 'w')
-readings = readings + str(blackMin) + '\n'
-readings = readings + str(blackMax) + '\n'
-readings = readings + str(whiteMin) + '\n'
-readings = readings + str(whiteMax) + '\n'
-readings_file.write(readings)
-readings_file.close()
+# readings = ""
+# readings_file = open('calibration.txt', 'w')
+# readings = readings + str(blackMin) + '\n'
+# readings = readings + str(blackMax) + '\n'
+# readings = readings + str(whiteMin) + '\n'
+# readings = readings + str(whiteMax) + '\n'
+# readings_file.write(readings)
+# readings_file.close()

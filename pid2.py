@@ -17,14 +17,21 @@ def checkWhite(sensor):
 	return 0
 
 def checkBlack(sensor):
-	if sensor.value() >= blackMin and sensor.value() >= blackMax:
+
+	if sensor.value() >= 0 and sensor.value() <=15 :
 		return 1
 	return 0
 
-def findNextLine():
-	while checkWhite(colorSensor):
+def findNextLine(sensor):
+	counter = 0
+	while True: # checkWhite(colorSensor):
 		motR.run_direct(duty_cycle_sp = 25)
 		motL.run_direct(duty_cycle_sp = 25)
+		sv=sensor.value()
+		if sv>=0 and sv<=15:
+			counter = counter +1
+		if counter == 20:
+			break
 	motR.stop()
 	motL.stop()
 	ev3.Sound.speak('Found start of line').wait()
@@ -41,23 +48,29 @@ def findEndLine():
 def turnLeft(g):
 	g.mode='GYRO-ANG'
 	oldVal=g.value()
-	print("OLD VALUE: ",oldVal)
-	while(math.fabs(oldVal-g.value())<60):
+	#print("OLD VALUE: ",oldVal)
+	while(math.fabs(oldVal-g.value())<66):
 	    motL.run_direct(duty_cycle_sp=40)
-	    print(g.value())
+	    #print(g.value())
 	    if btn.any():
 	        break;
+	motR.stop()
+	motL.stop()
+	    
+	    
 
 
-def turnRight(g):
+def turnRight(g, x):
 	g.mode='GYRO-ANG'
 	oldVal=g.value()
-	print("OLD VALUE: ",oldVal)
-	while(math.fabs(oldVal-g.value())<80):
+	#print("OLD VALUE: ",oldVal)
+	while(math.fabs(oldVal-g.value())<80 + x):
 	    motR.run_direct(duty_cycle_sp=40)
-	    print(g.value())
+	    #print(g.value())
 	    if btn.any():
 	        break;
+	motR.stop()
+	motL.stop()
 
 def checkEndLine(error, lastError):
 	global constantCount
@@ -66,12 +79,12 @@ def checkEndLine(error, lastError):
 	else:
 		constantCount = 0
 		return 0
-	if constantCount == 25:
+	if constantCount == 15:
 		#ev3.Sound.speak('I\'m done b').wait()
 		return 1
 
 def followLine():
-	ev3.Sound.speak('Following line').wait()
+	#ev3.Sound.speak('Following line').wait()
 	Kp = float(2) # Proportional gain. Start value 1
 	Kd =0.5           # Derivative gain. Start value 0
 	Ki = float(0.5) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 100!
@@ -83,7 +96,7 @@ def followLine():
 	while not btn.any():
 		LightValue = colorSensor.value()    # what is the current light reading?
 		error = LightValue - offset        # calculate the error by subtracting the offset
-		if error == lastError:
+		if error == 55:
 			constantCount = constantCount + 1
 		else:
 			constantCount = 0
@@ -158,34 +171,60 @@ colorSensor.mode = 'COL-REFLECT'
 
 # calibration = open('calibration.txt', 'r')
 # #global values for calibration
-blackMin = 10;
-blackMax = 30;
+blackMin = 0;
+blackMax = 15;
 whiteMin = 95;
 whiteMax = 100;
 
-Tp = 50
+Tp = 40
 ev3.Sound.speak('Place me on the line').wait()
 time.sleep(1)
 runForward()
 followLine()
 ev3.Sound.speak('Looking for line on the left').wait()
 turnLeft(g)
-findNextLine()
-#findEndLine()
+findNextLine(colorSensor)
+#time.sleep(0.5)
+#followLine()
 # motR.stop()
 # motL.stop()
-ev3.Sound.speak('Turning around to follow line').wait()
-turnRight(g)
-motR.stop()
-motL.stop()
+ev3.Sound.speak('Turning right to follow line').wait()
+turnRight(g, 5)
+#motR.stop()
+#motL.stop()
+ev3.Sound.speak('Following line').wait()
 runForward()
 followLine()
 # turnRight(g)
-# ev3.Sound.speak('Looking for line on the right').wait()
-# findNextLine()
-# turnLeft(g)
-# ev3.Sound.speak('Turning around to follow line').wait()
-# followLine()
+ev3.Sound.speak('Looking for line on the right').wait()
+turnRight(g,20)
+findNextLine(colorSensor)
+#time.sleep(0.5)
+#followLine()
+ev3.Sound.speak('Turning right').wait()
+turnLeft(g)
+ev3.Sound.speak('Following line').wait()
+runForward()
+followLine()
+ev3.Sound.speak('Looking for line on the left').wait()
+turnLeft(g)
+findNextLine(colorSensor)
+ev3.Sound.speak('Turning right to follow line').wait()
+turnRight(g,5)
+ev3.Sound.speak('Following line').wait()
+runForward()
+followLine()
+ev3.Sound.speak('Looking for line on the right').wait()
+turnRight(g,20)
+findNextLine(colorSensor)
+ev3.Sound.speak('Turning left to follow line').wait()
+turnLeft(g)
+motR.stop()
+motL.stop()
+ev3.Sound.speak('Almost done, following line').wait()
+runForward()
+followLine()
+ev3.Sound.speak('I\'m done baby').wait()
 motR.stop()
 motL.stop()
 # findEndLine()

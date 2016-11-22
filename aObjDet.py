@@ -30,7 +30,7 @@ def findNextLine(sensor):
 		sv=sensor.value()
 		if sv>=0 and sv<=15:
 			counter = counter +1
-		if counter == 30:
+		if counter == 20:
 			break
 	motR.stop()
 	motL.stop()
@@ -49,7 +49,7 @@ def turnLeft(g):
 	g.mode='GYRO-ANG'
 	oldVal=g.value()
 	#print("OLD VALUE: ",oldVal)
-	while(math.fabs(oldVal-g.value())<85):
+	while(math.fabs(oldVal-g.value())<90):
 	    motL.run_direct(duty_cycle_sp=40)
 	    #print(g.value())
 	    if btn.any():
@@ -64,7 +64,7 @@ def turnRight(g, x):
 	g.mode='GYRO-ANG'
 	oldVal=g.value()
 	#print("OLD VALUE: ",oldVal)
-	while(math.fabs(oldVal-g.value())<70 + x):
+	while(math.fabs(oldVal-g.value())<90 + x):
 	    motR.run_direct(duty_cycle_sp=40)
 	    #print(g.value())
 	    if btn.any():
@@ -85,9 +85,9 @@ def checkEndLine(error, lastError):
 
 def followLine():
 	#ev3.Sound.speak('Following line').wait()
-	Kp = float(0.7) # Proportional gain. Start value 1
-	Kd = float (0.78)           # Derivative gain. Start value 0
-	Ki = float(0.45) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 100!
+	Kp = float(2) # Proportional gain. Start value 1
+	Kd =0.5           # Derivative gain. Start value 0
+	Ki = float(0.5) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 100!
 	offset = 45                           # Initialize the variables
 	integral = 0.0                          # the place where we will store our integral
 	lastError = 0.0                         # the place where we will store the last error value
@@ -95,13 +95,16 @@ def followLine():
 	constantCount = 0
 	while not btn.any():
 		LightValue = colorSensor.value()    # what is the current light reading?
+		if uS.value()<100:
+			motL.stop()
+			motR.stop()
+			break
 		error = LightValue - offset        # calculate the error by subtracting the offset
-		#print error
 		if error == 55:
 			constantCount = constantCount + 1
 		else:
 			constantCount = 0
-		if constantCount == 10:
+		if constantCount == 20:
 			#ev3.Sound.speak('I\'m done b').wait()
 			motR.stop()
 			motL.stop()
@@ -118,12 +121,40 @@ def followLine():
 		lastError = error                  #save the current error so it can be the lastError next time around
 		#time.sleep(0.1)
 	#ev3.Sound.speak('End of loop').wait()
+	motR.stop()
+	motL.stop()
 	time.sleep(0.1)
 	#return 0
 
 def runForward():
     motR.run_direct()
     motL.run_direct()
+
+def moveAway():
+	ev3.Sound.speak('moving away from object').wait()
+	motR.duty_cycle_sp = 30
+	motL.duty_cycle_sp = 30
+	while uS.value()<200:
+		motR.run_direct()
+		motL.run_direct()
+	motL.stop()
+	motR.stop()	
+
+def moveBody():
+	oldTime=time.time()
+	while(math.fabs(time.time()-oldTime)<0.5):
+		motL.run_direct(duty_cycle_sp=50)
+		motR.run_direct(duty_cycle_sp=50)
+	motL.stop()
+	motR.stop()
+
+
+
+def turnEyes():
+	oldPos=eyes.position
+	while(math.fabs(oldPos-eyes.position)<90):
+		eyes.run_direct()
+	eyes.stop()
 
 
 def steering2(course, power):
@@ -165,7 +196,11 @@ def steering2(course, power):
 #motors and sensors
 motR = ev3.LargeMotor('outA')
 motL = ev3.LargeMotor('outD')
-colorSensor = ev3.ColorSensor(ev3.INPUT_3)
+uS = ev3.UltrasonicSensor()
+uS.mode = 'US-DIST-CM'
+colorSensor = ev3.ColorSensor()
+eyes = ev3.MediumMotor('outC')
+eyes.duty_cycle_sp=70
 g = ev3.GyroSensor()
 btn =ev3.Button()
 colorSensor.mode = 'COL-REFLECT'
@@ -182,61 +217,16 @@ ev3.Sound.speak('Place me on the line').wait()
 time.sleep(1)
 runForward()
 followLine()
-ev3.Sound.speak('Looking for line on the left').wait()
+ev3.Sound.speak('Found object. Turning left').wait()
 turnLeft(g)
-findNextLine(colorSensor)
-
-ev3.Sound.speak('Turning right to follow line').wait()
-turnRight(g, 5)
-
-ev3.Sound.speak('Following line').wait()
-runForward()
+turnEyes()
+moveAway()
+ev3.Sound.speak('moving my body').wait()
+moveBody()
+turnRight(g,0)
+moveAway()
+moveBody()
+turnRight(g, 0)
+findNextLine()
 followLine()
 
-ev3.Sound.speak('Looking for line on the right').wait()
-turnRight(g,20)
-findNextLine(colorSensor)
-
-ev3.Sound.speak('Turning right').wait()
-turnLeft(g)
-ev3.Sound.speak('Following line').wait()
-runForward()
-followLine()
-ev3.Sound.speak('Looking for line on the left').wait()
-turnLeft(g)
-findNextLine(colorSensor)
-ev3.Sound.speak('Turning right to follow line').wait()
-turnRight(g,5)
-ev3.Sound.speak('Following line').wait()
-runForward()
-followLine()
-ev3.Sound.speak('Looking for line on the right').wait()
-turnRight(g,20)
-findNextLine(colorSensor)
-ev3.Sound.speak('Turning left to follow line').wait()
-turnLeft(g)
-motR.stop()
-motL.stop()
-ev3.Sound.speak('Almost done, following line').wait()
-runForward()
-followLine()
-ev3.Sound.speak('I\'m done baby').wait()
-motR.stop()
-motL.stop()
-# findEndLine()
-# motL.stop()
-# turnRight()
-# ev3.Sound.speak('Found love').wait()
-# followLine()
-# ev3.Sound.speak('Followed love').wait()
-# time.sleep(0.1)
-# while not btn.any():
-# 	gyroSensor.mode ='GYRO-ANG'
-# 	print gyroSensor.value()
-# 	#ev3.Sound.speak('turning around').wait()
-# 	motL.duty_cycle_sp=50
-# 	motR.duty_cycle_sp=-50
-
-# motL.run_forever()
-# motR.run_forever()
-# turnRight()

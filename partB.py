@@ -30,7 +30,7 @@ def findNextLine(sensor):
 		sv=sensor.value()
 		if sv>=0 and sv<=15:
 			counter = counter +1
-		if counter == 30:
+		if counter == 20:
 			break
 	motR.stop()
 	motL.stop()
@@ -49,7 +49,7 @@ def turnLeft(g):
 	g.mode='GYRO-ANG'
 	oldVal=g.value()
 	#print("OLD VALUE: ",oldVal)
-	while(math.fabs(oldVal-g.value())<85):
+	while(math.fabs(oldVal-g.value())<66):
 	    motL.run_direct(duty_cycle_sp=40)
 	    #print(g.value())
 	    if btn.any():
@@ -64,7 +64,7 @@ def turnRight(g, x):
 	g.mode='GYRO-ANG'
 	oldVal=g.value()
 	#print("OLD VALUE: ",oldVal)
-	while(math.fabs(oldVal-g.value())<70 + x):
+	while(math.fabs(oldVal-g.value())<80 + x):
 	    motR.run_direct(duty_cycle_sp=40)
 	    #print(g.value())
 	    if btn.any():
@@ -85,9 +85,9 @@ def checkEndLine(error, lastError):
 
 def followLine():
 	#ev3.Sound.speak('Following line').wait()
-	Kp = float(0.7) # Proportional gain. Start value 1
-	Kd = float (0.78)           # Derivative gain. Start value 0
-	Ki = float(0.45) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 100!
+	Kp = float(2) # Proportional gain. Start value 1
+	Kd =0.5           # Derivative gain. Start value 0
+	Ki = float(0.5) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 100!
 	offset = 45                           # Initialize the variables
 	integral = 0.0                          # the place where we will store our integral
 	lastError = 0.0                         # the place where we will store the last error value
@@ -96,12 +96,11 @@ def followLine():
 	while not btn.any():
 		LightValue = colorSensor.value()    # what is the current light reading?
 		error = LightValue - offset        # calculate the error by subtracting the offset
-		#print error
 		if error == 55:
 			constantCount = constantCount + 1
 		else:
 			constantCount = 0
-		if constantCount == 10:
+		if constantCount == 20:
 			#ev3.Sound.speak('I\'m done b').wait()
 			motR.stop()
 			motL.stop()
@@ -165,7 +164,7 @@ def steering2(course, power):
 #motors and sensors
 motR = ev3.LargeMotor('outA')
 motL = ev3.LargeMotor('outD')
-colorSensor = ev3.ColorSensor(ev3.INPUT_3)
+colorSensor = ev3.ColorSensor()
 g = ev3.GyroSensor()
 btn =ev3.Button()
 colorSensor.mode = 'COL-REFLECT'
@@ -185,18 +184,23 @@ followLine()
 ev3.Sound.speak('Looking for line on the left').wait()
 turnLeft(g)
 findNextLine(colorSensor)
-
+#time.sleep(0.5)
+#followLine()
+# motR.stop()
+# motL.stop()
 ev3.Sound.speak('Turning right to follow line').wait()
 turnRight(g, 5)
-
+#motR.stop()
+#motL.stop()
 ev3.Sound.speak('Following line').wait()
 runForward()
 followLine()
-
+# turnRight(g)
 ev3.Sound.speak('Looking for line on the right').wait()
 turnRight(g,20)
 findNextLine(colorSensor)
-
+#time.sleep(0.5)
+#followLine()
 ev3.Sound.speak('Turning right').wait()
 turnLeft(g)
 ev3.Sound.speak('Following line').wait()

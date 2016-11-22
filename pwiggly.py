@@ -58,15 +58,20 @@ colorSensor.mode = 'COL-REFLECT'
 colorSensor.connected
 runForward()
 # 0.25 0.15 works okeish
-Kp = float(0.2) # Proportional gain. Start value 1
-Kd = 0.15           # Derivative gain. Start value 0
-Ki = float(0.02) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 
-offset = 45                           # Initialize the variables
+Kp = float(0.25) # Proportional gain. Start value 1
+Kd = 0.15         # Derivative gain. Start value 0
+Ki = float(0.02) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this i
+
+Kp = float(0.25) # Proportional gain. Start value 1
+Kd = 0.15         # Derivative gain. Start value 0
+Ki = float(0.02) # Integral gain. Start value 0    really  
+offset = 55                           # Initialize the variables
 integral = 0.0                          # the place where we will store our integral
 lastError = 0.0                         # the place where we will store the last error value
 derivative = 0.0                        # the place where we will store the derivative
 constantCount = 0
 state="Time,Turn\n"
+lastTurn=1
 while not btn.any():
 	LightValue = colorSensor.value()    # what is the current light reading?
 	error = LightValue - offset        # calculate the error by subtracting the offset
@@ -75,7 +80,7 @@ while not btn.any():
 		constantCount = constantCount + 1
 	else:
 		constantCount = 0
-	if constantCount == 30:
+	if constantCount == 1550:
 		#ev3.Sound.speak('I\'m done b').wait()
 		motR.stop()
 		motL.stop()
@@ -83,7 +88,8 @@ while not btn.any():
 	integral = 0.5*integral + error        # calculate the integral
 	derivative = error - lastError     # calculate the derivative
 	
-	Turn = Kp*error + Ki*integral + Kd*derivative  # the "P term" the "I term" and the "D term"
+	Turn = (Kp*error + Ki*integral + Kd*derivative)*1+0.0*lastTurn  # the "P term" the "I term" and the "D term"
+        lastTurn=Turn
     #powerA=Tp+Turn
 	#Turn = Turn/100                      # REMEMBER to undo the affect of the factor of 100 in Kp, Ki and Kd!
 	# powerA = Tp + Turn                 # the power level for the A motor
@@ -91,13 +97,17 @@ while not btn.any():
     #powerA=Tp+Turn
 	powerA=Tp+Turn
         powerC=Tp-Turn
+	if powerA>100:
+	    powerA=100
+        if powerA<-100:
+	    powerA=-100    
  	motR.duty_cycle_sp=powerA
 	motL.duty_cycle_sp=powerC
-        state=state+str(time.time())+","+str(Turn)+"\n"
+        #state=state+str(time.time())+","+str(Turn)+"\n"
 	lastError = error                  #save the current error so it can be the lastError next time around
 	#time.sleep(0.1)
 
-readings_file = open('oscilationKp2.txt', 'w')
-readings_file.write(state)
-readings_file.close()
+#readings_file = open('oscilationKp4.txt', 'w')
+#readings_file.write(state)
+#readings_file.close()
 ev3.Sound.speak('I\'m done baby').wait()

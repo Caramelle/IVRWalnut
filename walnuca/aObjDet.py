@@ -4,11 +4,6 @@ import time
 import math
 import ev3dev.ev3 as ev3
 
-# Local Imports
-import tutorial as tutorial
-import utilities
-import openLoopControl as olc
-
 print ('Welcome to ev3')
 
 def checkWhite(sensor):
@@ -249,8 +244,8 @@ def moveAway():
 		integral = 0.5*integral + error        # calculate the integral
 		derivative = error - lastError     # calculate the derivative
 		tangent = error * Kt
-		Turn = (Kp*error + Ki*integral + Kd*derivative)*1  # the "P term" the "I term" and the "D term"
-                if DistanceValue > 500:
+		Turn = (Kp*error + Ki*integral + Kd*derivative)*Kt # the "P term" the "I term" and the "D term"
+		if DistanceValue > 500:
 			powerA = 20
 			powerC = 15
 		state=state+str(time.time())+","+str(Turn)+","+str(error)+"\n"

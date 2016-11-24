@@ -4,10 +4,7 @@ import time
 import math
 import ev3dev.ev3 as ev3
 
-# Local Imports
-import tutorial as tutorial
-import utilities
-import openLoopControl as olc
+
 
 print ('Welcome to ev3')
 
@@ -44,12 +41,24 @@ def findEndLine():
 	motL.stop()
 	ev3.Sound.speak('Found end of line').wait()
 
+def checkLine():
+	colour = colorSensor.value()
+	global constantWhite
+	if colour > 0 and colour <15:
+		constantWhite = constantWhite + 1
+	else:
+		constantWhite = 0
+		return 0
+	if constantWhite == 5:
+		#ev3.Sound.speak('I\'m done b').wait()
+		return 1
 
-def turnLeft(g):
+
+def turnLeft(g,x):
 	g.mode='GYRO-ANG'
 	oldVal=g.value()
 	#print("OLD VALUE: ",oldVal)
-	while(math.fabs(oldVal-g.value())<66):
+	while(math.fabs(oldVal-g.value())<80 + x): ##66
 	    motL.run_direct(duty_cycle_sp=40)
 	    #print(g.value())
 	    if btn.any():
@@ -64,7 +73,7 @@ def turnRight(g, x):
 	g.mode='GYRO-ANG'
 	oldVal=g.value()
 	#print("OLD VALUE: ",oldVal)
-	while(math.fabs(oldVal-g.value())<80 + x):
+	while(math.fabs(oldVal-g.value())<80 + x): #80
 	    motR.run_direct(duty_cycle_sp=40)
 	    #print(g.value())
 	    if btn.any():
@@ -85,35 +94,41 @@ def checkEndLine(error, lastError):
 
 def followLine():
 	#ev3.Sound.speak('Following line').wait()
-	Kp = float(1) # Proportional gain. Start value 1
-	Kd =0.5           # Derivative gain. Start value 0
-	Ki = float(0.5) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 100!
-	offset = 45                           # Initialize the variables
+	Kp = float(0.3) # Proportional gain. Start value 1
+	Kd =0.4           # Derivative gain. Start value 0
+	Ki = float(0.02) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this is really 100!
+	offset = 55                           # Initialize the variables
 	integral = 0.0                          # the place where we will store our integral
 	lastError = 0.0                         # the place where we will store the last error value
 	derivative = 0.0                        # the place where we will store the derivative
 	constantCount = 0
+	lastTurn = 1
 	while not btn.any():
 		LightValue = colorSensor.value()    # what is the current light reading?
 		error = LightValue - offset        # calculate the error by subtracting the offset
-		if error == 55:
+		if error == 100-offset:
 			constantCount = constantCount + 1
 		else:
 			constantCount = 0
-		if constantCount == 20:
+		if constantCount == 15:
 			#ev3.Sound.speak('I\'m done b').wait()
 			motR.stop()
 			motL.stop()
 			break
+		#integral = 0.5*integral + error        # calculate the integral
+		#derivative = error - lastError     # calculate the derivative
 		integral = 0.5*integral + error        # calculate the integral
 		derivative = error - lastError     # calculate the derivative
-		Turn = Kp*error + Ki*integral + Kd*derivative  # the "P term" the "I term" and the "D term"
+		Turn = (Kp*error + Ki*integral + Kd*derivative)*0.8+0.2*lastTurn  # the "P term" the "I term" and the "D term"
+		lastTurn=Turn
+		powerA=Tp+Turn
+		powerC=Tp-Turn
 		#Turn = Turn/100                      # REMEMBER to undo the affect of the factor of 100 in Kp, Ki and Kd!
 		# powerA = Tp + Turn                 # the power level for the A motor
 		# powerC = Tp - Turn                 # the power level for the C motor
-		(l,r)=steering2(Turn,Tp)
-		motR.duty_cycle_sp=r
-		motL.duty_cycle_sp=l
+		#(l,r)=steering2(Turn,Tp)
+		motR.duty_cycle_sp=powerA
+		motL.duty_cycle_sp=powerC
 		lastError = error                  #save the current error so it can be the lastError next time around
 		#time.sleep(0.1)
 	#ev3.Sound.speak('End of loop').wait()
@@ -176,20 +191,20 @@ blackMax = 15;
 whiteMin = 95;
 whiteMax = 100;
 
-Tp = 40
+Tp = 30
 ev3.Sound.speak('Place me on the line').wait()
 time.sleep(1)
 runForward()
 followLine()
 ev3.Sound.speak('Looking for line on the left').wait()
-turnLeft(g)
+turnLeft(g, -3)
 findNextLine(colorSensor)
 #time.sleep(0.5)
 #followLine()
 # motR.stop()
 # motL.stop()
 ev3.Sound.speak('Turning right to follow line').wait()
-turnRight(g, 5)
+turnRight(g, 0) #5
 #motR.stop()
 #motL.stop()
 ev3.Sound.speak('Following line').wait()
@@ -197,28 +212,28 @@ runForward()
 followLine()
 # turnRight(g)
 ev3.Sound.speak('Looking for line on the right').wait()
-turnRight(g,20)
+turnRight(g, -2) #20
 findNextLine(colorSensor)
 #time.sleep(0.5)
 #followLine()
 ev3.Sound.speak('Turning right').wait()
-turnLeft(g)
+turnLeft(g, -3)
 ev3.Sound.speak('Following line').wait()
 runForward()
 followLine()
 ev3.Sound.speak('Looking for line on the left').wait()
-turnLeft(g)
+turnLeft(g, 9)
 findNextLine(colorSensor)
-ev3.Sound.speak('Turning right to follow line').wait()
-turnRight(g,5)
+ev3.Sound.speak('Turnig right to follow line').wait()
+turnRight(g,-7) #5
 ev3.Sound.speak('Following line').wait()
 runForward()
 followLine()
 ev3.Sound.speak('Looking for line on the right').wait()
-turnRight(g,20)
+turnRight(g,5) #20
 findNextLine(colorSensor)
 ev3.Sound.speak('Turning left to follow line').wait()
-turnLeft(g)
+turnLeft(g, 0)
 motR.stop()
 motL.stop()
 ev3.Sound.speak('Almost done, following line').wait()

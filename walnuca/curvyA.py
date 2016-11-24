@@ -58,8 +58,8 @@ Kp = float(0.25) # Proportional gain. Start value 1
 Kd = 0.15         # Derivative gain. Start value 0
 Ki = float(0.02) # Integral gain. Start value 0                        # REMEMBER we are using Kd*100 so this i
 
-Kp = float(0.3) # Proportional gain. Start value 1
-Kd = 0.40        # Derivative gain. Start value 0
+Kp = float(0.35) # Proportional gain. Start value 1
+Kd = 0.25         # Derivative gain. Start value 0
 Ki = float(0.02) # Integral gain. Start value 0    really
 offset = 55                           # Initialize the variables
 integral = 0.0                          # the place where we will store our integral
@@ -85,9 +85,9 @@ while not btn.any():
 	integral = 0.5*integral + error        # calculate the integral
 	derivative = error - lastError     # calculate the derivative
 	Turn = (Kp*error + Ki*integral + Kd*derivative)*0.8+0.2*lastTurn  # the "P term" the "I term" and the "D term"
-	lastTurn=Turn
+        lastTurn=Turn
 	powerA=Tp+Turn
-    powerC=Tp-Turn
+        powerC=Tp-Turn
 	if powerA>100:
 	    powerA=100
         if powerA<-100:
